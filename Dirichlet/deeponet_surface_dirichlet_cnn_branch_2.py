@@ -208,6 +208,12 @@ class CNN(nn.Module):
         return output
 '''
 
+'''
+# Main reference CNN implementation for branch2.
+# Minimises loss upto 1.7e-3 with 15000 epochs.
+# Alternatively, reaches loss to the order of 6e-3 in ~3200 epochs
+# and loss to the order of 3.2e-3 in ~6000 epochs.
+# DeepONet has 38968 learnable parameters (60% of learnable parameters of FNN).
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -256,14 +262,90 @@ class CNN(nn.Module):
         self.fnn3 = torch.nn.Linear(64, 64)
 
     def forward(self, x):
+        print(f"Input size: {x.shape}")
         x = self.conv1(x)
+        print(f"After conv1: {x.shape}")
         x = self.conv2(x)
+        print(f"After conv2: {x.shape}")
         x = self.conv3(x)
+        print(f"After conv3: {x.shape}")
         x = x.view(x.size(0), -1)
+        print(f"After reshape: {x.shape}")
         output = self.activation(self.fnn1(x))
+        print(f"After FNN1: {output.shape}")
         output = self.activation(self.fnn2(output))
+        print(f"After FNN2: {output.shape}")
         output = self.activation(self.fnn3(output))
+        print(f"After FNN3: {output.shape}")
+        exit()
         return output
+'''
+
+class CNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.activation = torch.nn.Tanh()
+        self.conv1d_1 = \
+            torch.nn.Conv1d(
+                in_channels = 1,
+                out_channels = 4,
+                kernel_size = 11,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_1 = \
+            torch.nn.BatchNorm1d(4)
+        self.avgpool1d_1 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_2 = \
+            torch.nn.Conv1d(
+                in_channels = 4,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_2 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_2 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_3 = \
+            torch.nn.Conv1d(
+                in_channels = 8,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_3 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_3 = \
+            torch.nn.AvgPool1d(3)
+
+        self.fnn1 = torch.nn.Linear(136, 64)
+        self.fnn2 = torch.nn.Linear(64, 64)
+        self.fnn3 = torch.nn.Linear(64, 64)
+
+    def forward(self, x):
+        x = self.conv1d_1(x)
+        x = self.batchnorm1d_1(x)
+        x = self.activation(x)
+        x = self.avgpool1d_1(x)
+        x = self.conv1d_2(x)
+        x = self.batchnorm1d_2(x)
+        x = self.activation(x)
+        x = self.avgpool1d_2(x)
+        x = self.conv1d_3(x)
+        x = self.batchnorm1d_3(x)
+        x = self.activation(x)
+        x = self.avgpool1d_3(x)
+        x = x.view(x.size(0), -1)
+        x = self.activation(self.fnn1(x))
+        x = self.activation(self.fnn2(x))
+        x = self.activation(self.fnn3(x))
+        return x
 
 # main structure of DeepONet with multiple inputs (two inputs)
 
@@ -336,13 +418,14 @@ inner_layer_size = 64
 activation = nn.Tanh()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+dtype = torch.float32
 print('calculation device : ', device)
 
 
 model = DeepONet(input_size_branch1, hidden_layers_branch1, hidden_neurons_branch1, \
                  input_size_branch2, hidden_layers_branch2, hidden_neurons_branch2, \
                  hidden_layers_trunk, hidden_neurons_trunk, \
-                 inner_layer_size, activation, N_obs).to(device)
+                 inner_layer_size, activation, N_obs).to(device).to(dtype)
 
 torch.save(model.state_dict(), 'start_model_parameters_dirichlet.pth')
 
@@ -383,19 +466,19 @@ for epoch in range(num_epochs):
     for i in range(0, size_training_data, size_batch):
 
         # data for the output
-        hei_data_tensor = normalized_hei_tensors[i:i + size_batch].to(device)
+        hei_data_tensor = normalized_hei_tensors[i:i + size_batch].to(device).to(dtype)
 
         # branch net1 input: measurement height Z
-        zz_input_tensor = normalized_zz_tensors[i:i + size_batch].to(device)
+        zz_input_tensor = normalized_zz_tensors[i:i + size_batch].to(device).to(dtype)
 
         # branch net2 input: real and imaginary parts of scattered data
-        sc_real_tensor = normalized_phis_real_tensors[i:i + size_batch].to(device)
-        sc_imag_tensor = normalized_phis_imag_tensors[i:i + size_batch].to(device)
+        sc_real_tensor = normalized_phis_real_tensors[i:i + size_batch].to(device).to(dtype)
+        sc_imag_tensor = normalized_phis_imag_tensors[i:i + size_batch].to(device).to(dtype)
         # sc_input_tensor = torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)
         sc_input_tensor = (torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)).unsqueeze(1)
 
         # deeponet output
-        hei_pred_tensor = model(zz_input_tensor, sc_input_tensor, normalized_x_tensors.to(device))
+        hei_pred_tensor = model(zz_input_tensor, sc_input_tensor, normalized_x_tensors.to(device).to(dtype))
 
         # loss function
         loss = nn.MSELoss()(hei_pred_tensor, hei_data_tensor)
@@ -425,13 +508,13 @@ hei_actual = inverse_normalize_tensor(hei_actual_tensor, hmax, hmin)
 hei_actual_vec = hei_actual.cpu().detach().numpy()
 
 # input datas
-zz_tensor_test = normalized_zz_tensors[ntest].to(device)
-sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device)
-sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device)
+zz_tensor_test = normalized_zz_tensors[ntest].to(device).to(dtype)
+sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device).to(dtype)
+sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device).to(dtype)
 sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)).unsqueeze(0)).unsqueeze(0)
 
 # output data (predicted surface)
-hei_pred_tensor_test = model(zz_tensor_test, sc_input_tensor_test, normalized_x_tensors.to(device))
+hei_pred_tensor_test = model(zz_tensor_test, sc_input_tensor_test, normalized_x_tensors.to(device).to(dtype))
 hei_pred = inverse_normalize_tensor(hei_pred_tensor_test, hmax, hmin)
 hei_pred_vec = (hei_pred.cpu().detach().numpy()).squeeze(0)
 
@@ -462,9 +545,9 @@ hei_actual = inverse_normalize_tensor(hei_actual_tensor, hmax, hmin)
 hei_actual_vec = hei_actual.cpu().detach().numpy()
 
 # input datas
-zz_tensor_test = normalized_zz_tensors[ntest].to(device)
-sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device)
-sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device)
+zz_tensor_test = normalized_zz_tensors[ntest].to(device).to(dtype)
+sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device).to(dtype)
+sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device).to(dtype)
 
 # add white noise to the scattered data
 # noise level eps
@@ -476,7 +559,7 @@ sc_imag_tensor_noise = sc_imag_tensor_test * (1 + eps * random_float)
 sc_input_tensor_noise = ((torch.cat((sc_real_tensor_noise, sc_imag_tensor_noise), dim=0)).unsqueeze(0)).unsqueeze(0)
 
 # output data (predicted surface)
-hei_pred_tensor_noise = model(zz_tensor_test, sc_input_tensor_noise, normalized_x_tensors.to(device))
+hei_pred_tensor_noise = model(zz_tensor_test, sc_input_tensor_noise, normalized_x_tensors.to(device).to(dtype))
 hei_pred_noise = inverse_normalize_tensor(hei_pred_tensor_noise, hmax, hmin)
 hei_pred_vec = (hei_pred_noise.cpu().detach().numpy()).squeeze(0)
 
@@ -493,3 +576,87 @@ plt.show()
 # calculate the l2 norm error
 error_vec = hei_actual_vec - hei_pred_vec
 print("l2 norm error is: ", np.linalg.norm(error_vec) / np.linalg.norm(hei_actual_vec))
+
+# CNN class for output size printing after each layer
+class CNN_shape_print(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.activation = torch.nn.Tanh()
+        self.conv1d_1 = \
+            torch.nn.Conv1d(
+                in_channels = 1,
+                out_channels = 4,
+                kernel_size = 11,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_1 = \
+            torch.nn.BatchNorm1d(4)
+        self.avgpool1d_1 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_2 = \
+            torch.nn.Conv1d(
+                in_channels = 4,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_2 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_2 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_3 = \
+            torch.nn.Conv1d(
+                in_channels = 8,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_3 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_3 = \
+            torch.nn.AvgPool1d(3)
+
+        self.fnn1 = torch.nn.Linear(136, 64)
+        self.fnn2 = torch.nn.Linear(64, 64)
+        self.fnn3 = torch.nn.Linear(64, 64)
+
+    def forward(self, x):
+        print(f"Initial shape: {x.shape}")
+        x = self.conv1d_1(x)
+        print(f"After conv1d_1: {x.shape}")
+        x = self.batchnorm1d_1(x)
+        print(f"After batchnorm1d_1: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_1(x)
+        print(f"After avgpool1d_1: {x.shape}")
+        x = self.conv1d_2(x)
+        print(f"After conv1d_2: {x.shape}")
+        x = self.batchnorm1d_2(x)
+        print(f"After batchnorm1d_2: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_2(x)
+        print(f"After avgpool1d_2: {x.shape}")
+        x = self.conv1d_3(x)
+        print(f"After conv1d_3: {x.shape}")
+        x = self.batchnorm1d_3(x)
+        print(f"After batchnorm1d_3: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_3(x)
+        print(f"After avgpool1d_3: {x.shape}")
+        x = x.view(x.size(0), -1)
+        print(f"After reshape: {x.shape}")
+        x = self.activation(self.fnn1(x))
+        print(f"After fnn1: {x.shape}")
+        x = self.activation(self.fnn2(x))
+        print(f"After fnn2: {x.shape}")
+        x = self.activation(self.fnn3(x))
+        print(f"After fnn3: {x.shape}")
+        return x
+
+cnn_shape_print = CNN_shape_print().to(device).to(dtype)
+cnn_shape_print(sc_input_tensor.to(device)).to(dtype)
