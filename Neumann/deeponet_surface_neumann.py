@@ -343,7 +343,7 @@ for epoch in range(num_epochs):
         sc_real_tensor = normalized_phis_real_tensors[i:i + size_batch].to(device)
         sc_imag_tensor = normalized_phis_imag_tensors[i:i + size_batch].to(device)
         # sc_input_tensor = torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)
-        sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)).unsqueeze(0)).unsqueeze(0)
+        sc_input_tensor = (torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)).unsqueeze(1)
 
         # deeponet output
         hei_pred_tensor = model(zz_input_tensor, sc_input_tensor, normalized_x_tensors.to(device))
@@ -385,7 +385,8 @@ sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), d
 # output data (predicted surface)
 hei_pred_tensor_test = model(zz_tensor_test, sc_input_tensor_test, normalized_x_tensors.to(device))
 hei_pred = inverse_normalize_tensor(hei_pred_tensor_test, hmax, hmin)
-hei_pred_vec = hei_pred.cpu().detach().numpy()
+# hei_pred_vec = hei_pred.cpu().detach().numpy()
+hei_pred_vec = (hei_pred.cpu().detach().numpy()).squeeze(0)
 
 line1, = plt.plot(mesh_mid_obs[1:] / lamb, hei_actual_vec / lamb)
 line2, = plt.plot(mesh_mid_obs[1:] / lamb, hei_pred_vec / lamb)
