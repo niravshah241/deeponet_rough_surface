@@ -342,7 +342,8 @@ for epoch in range(num_epochs):
         # branch net2 input: real and imaginary parts of scattered data
         sc_real_tensor = normalized_phis_real_tensors[i:i + size_batch].to(device)
         sc_imag_tensor = normalized_phis_imag_tensors[i:i + size_batch].to(device)
-        sc_input_tensor = torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)
+        # sc_input_tensor = torch.cat((sc_real_tensor, sc_imag_tensor), dim=1)
+        sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)).unsqueeze(0)).unsqueeze(0)
 
         # deeponet output
         hei_pred_tensor = model(zz_input_tensor, sc_input_tensor, normalized_x_tensors.to(device))
@@ -378,7 +379,8 @@ hei_actual_vec = hei_actual.cpu().detach().numpy()
 zz_tensor_test = normalized_zz_tensors[ntest].to(device)
 sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device)
 sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device)
-sc_input_tensor_test = torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)
+# sc_input_tensor_test = torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)
+sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)).unsqueeze(0)).unsqueeze(0)
 
 # output data (predicted surface)
 hei_pred_tensor_test = model(zz_tensor_test, sc_input_tensor_test, normalized_x_tensors.to(device))
@@ -422,12 +424,14 @@ eps = 0.1
 random_float = (torch.rand_like(sc_real_tensor_test) - 0.5) * 2
 sc_real_tensor_noise = sc_real_tensor_test * (1 + eps * random_float)
 sc_imag_tensor_noise = sc_imag_tensor_test * (1 + eps * random_float)
-sc_input_tensor_noise = torch.cat((sc_real_tensor_noise, sc_imag_tensor_noise), dim=0)
+# sc_input_tensor_noise = torch.cat((sc_real_tensor_noise, sc_imag_tensor_noise), dim=0)
+sc_input_tensor_noise = ((torch.cat((sc_real_tensor_noise, sc_imag_tensor_noise), dim=0)).unsqueeze(0)).unsqueeze(0)
 
 # output data (predicted surface)
 hei_pred_tensor_noise = model(zz_tensor_test, sc_input_tensor_noise, normalized_x_tensors.to(device))
 hei_pred_noise = inverse_normalize_tensor(hei_pred_tensor_noise, hmax, hmin)
-hei_pred_vec = hei_pred_noise.cpu().detach().numpy()
+# hei_pred_vec = hei_pred_noise.cpu().detach().numpy()
+hei_pred_vec = (hei_pred_noise.cpu().detach().numpy()).squeeze(0)
 
 line1, = plt.plot(mesh_mid_obs[1:] / lamb, hei_actual_vec / lamb)
 line2, = plt.plot(mesh_mid_obs[1:] / lamb, hei_pred_vec / lamb)
