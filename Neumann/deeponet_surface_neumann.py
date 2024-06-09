@@ -311,7 +311,7 @@ num_trainable_para = number_parameter_count(model)
 print(f"Number of learnable model parameters: {num_trainable_para}")
 
 # set the number of training data and testing data
-size_training_data = 4500 # 15000
+size_training_data = 15000
 size_testing_data = 5000
 
 # set batch size
@@ -321,7 +321,7 @@ size_batch = 3000
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 # number of epochs
-num_epochs = 15000
+num_epochs = 4500 # 15000
 
 time1 = time.time()
 
