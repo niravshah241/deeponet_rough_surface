@@ -311,7 +311,7 @@ num_trainable_para = number_parameter_count(model)
 print(f"Number of learnable model parameters: {num_trainable_para}")
 
 # set the number of training data and testing data
-size_training_data = 15000
+size_training_data = 4500 # 15000
 size_testing_data = 5000
 
 # set batch size
