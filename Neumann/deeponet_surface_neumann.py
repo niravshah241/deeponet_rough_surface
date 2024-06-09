@@ -447,3 +447,86 @@ plt.show()
 error_vec = hei_actual_vec - hei_pred_vec
 print("l2 norm error is: ", np.linalg.norm(error_vec) / np.linalg.norm(hei_actual_vec))
 
+# CNN class for output size printing after each layer
+class CNN_shape_print(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.activation = torch.nn.Tanh()
+        self.conv1d_1 = \
+            torch.nn.Conv1d(
+                in_channels = 1,
+                out_channels = 4,
+                kernel_size = 11,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_1 = \
+            torch.nn.BatchNorm1d(4)
+        self.avgpool1d_1 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_2 = \
+            torch.nn.Conv1d(
+                in_channels = 4,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_2 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_2 = \
+            torch.nn.AvgPool1d(3)
+
+        self.conv1d_3 = \
+            torch.nn.Conv1d(
+                in_channels = 8,
+                out_channels = 8,
+                kernel_size = 5,
+                stride = 1,
+                padding = 2,
+                )
+        self.batchnorm1d_3 = \
+            torch.nn.BatchNorm1d(8)
+        self.avgpool1d_3 = \
+            torch.nn.AvgPool1d(3)
+
+        self.fnn1 = torch.nn.Linear(136, 64)
+        self.fnn2 = torch.nn.Linear(64, 64)
+        self.fnn3 = torch.nn.Linear(64, 64)
+
+    def forward(self, x):
+        print(f"Initial shape: {x.shape}")
+        x = self.conv1d_1(x)
+        print(f"After conv1d_1: {x.shape}")
+        x = self.batchnorm1d_1(x)
+        print(f"After batchnorm1d_1: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_1(x)
+        print(f"After avgpool1d_1: {x.shape}")
+        x = self.conv1d_2(x)
+        print(f"After conv1d_2: {x.shape}")
+        x = self.batchnorm1d_2(x)
+        print(f"After batchnorm1d_2: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_2(x)
+        print(f"After avgpool1d_2: {x.shape}")
+        x = self.conv1d_3(x)
+        print(f"After conv1d_3: {x.shape}")
+        x = self.batchnorm1d_3(x)
+        print(f"After batchnorm1d_3: {x.shape}")
+        x = self.activation(x)
+        x = self.avgpool1d_3(x)
+        print(f"After avgpool1d_3: {x.shape}")
+        x = x.view(x.size(0), -1)
+        print(f"After reshape: {x.shape}")
+        x = self.activation(self.fnn1(x))
+        print(f"After fnn1: {x.shape}")
+        x = self.activation(self.fnn2(x))
+        print(f"After fnn2: {x.shape}")
+        x = self.activation(self.fnn3(x))
+        print(f"After fnn3: {x.shape}")
+        return x
+
+cnn_shape_print = CNN_shape_print().to(device).to(dtype)
+cnn_shape_print(sc_input_tensor.to(device)).to(dtype)
