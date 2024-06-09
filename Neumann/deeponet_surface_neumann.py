@@ -528,5 +528,5 @@ class CNN_shape_print(nn.Module):
         print(f"After fnn3: {x.shape}")
         return x
 
-cnn_shape_print = CNN_shape_print().to(device).to(dtype)
-cnn_shape_print(sc_input_tensor.to(device)).to(dtype)
+cnn_shape_print = CNN_shape_print().to(device)
+cnn_shape_print(sc_input_tensor.to(device))
