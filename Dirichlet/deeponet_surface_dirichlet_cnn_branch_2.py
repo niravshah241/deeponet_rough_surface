@@ -142,6 +142,40 @@ class FNN(nn.Module):
         self.activation = activation
 
         self.input_layer = nn.Linear(input_size, hidden_neurons)
+        self.hidden_layers_list = nn.ModuleList()
+        for _ in range(hidden_layers - 1):
+            self.hidden_layers_list.append(nn.Linear(hidden_neurons, hidden_neurons))
+        self.output_layer = nn.Linear(hidden_neurons, output_size)
+
+    def forward(self, x):
+
+        x = self.activation(self.input_layer(x))
+
+        for i, hidden_layer in enumerate(self.hidden_layers_list):
+            x = self.activation(hidden_layer(x))
+
+        x = self.activation(self.output_layer(x))
+
+        return x
+
+class FNN_trunk(nn.Module):
+
+    # input_size: the size of input tensor
+    # output_size: size of output tensor
+    # hidden_layers: number of hidden layers
+    # hidden_neurons: number of hidden neurons per hidden layer
+    # activation: activation function
+
+    def __init__(self, input_size, output_size, hidden_layers, hidden_neurons, activation):
+
+        super(FNN, self).__init__()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_layers = hidden_layers
+        self.hidden_neurons = hidden_neurons
+        self.activation = activation
+
+        self.input_layer = nn.Linear(input_size, hidden_neurons)
         self.input_layer_batchnorm = nn.BatchNorm1d(hidden_neurons)
         self.hidden_layers_list = nn.ModuleList()
         self.batchnorm_layers_list = nn.ModuleList()
@@ -264,7 +298,7 @@ class DeepONet(nn.Module):
                            hidden_neurons_branch1, activation)
         self.branch2 = CNN() # FNN(input_size_branch2, inner_layer_size, hidden_layers_branch2, \
                            # hidden_neurons_branch2, activation)
-        self.trunk = FNN(1, inner_layer_size, hidden_layers_trunk, hidden_neurons_trunk, activation)
+        self.trunk = FNN_trunk(1, inner_layer_size, hidden_layers_trunk, hidden_neurons_trunk, activation)
 
         self.bias = nn.Parameter(torch.Tensor(1, size_bias))
 
