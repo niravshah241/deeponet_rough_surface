@@ -142,6 +142,7 @@ class FNN(nn.Module):
         self.activation = activation
 
         self.input_layer = nn.Linear(input_size, hidden_neurons)
+        self.input_layer_batchnorm = nn.BatchNorm1d(hidden_neurons)
         self.hidden_layers_list = nn.ModuleList()
         self.batchnorm_layers_list = nn.ModuleList()
         for _ in range(hidden_layers - 1):
@@ -151,7 +152,8 @@ class FNN(nn.Module):
 
     def forward(self, x):
 
-        x = self.activation(self.input_layer(x))
+        # x = self.activation(self.input_layer(x))
+        x = self.activation(self.input_layer_batchnorm(self.input_layer(x)))
 
         for i, hidden_layer in enumerate(self.hidden_layers_list):
             # x = self.activation(hidden_layer(x))
