@@ -168,7 +168,7 @@ class FNN_trunk(nn.Module):
 
     def __init__(self, input_size, output_size, hidden_layers, hidden_neurons, activation):
 
-        super(FNN, self).__init__()
+        super(FNN_trunk, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
         self.hidden_layers = hidden_layers
