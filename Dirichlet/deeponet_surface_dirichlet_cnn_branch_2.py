@@ -396,7 +396,8 @@ hei_actual = inverse_normalize_tensor(hei_actual_tensor, hmax, hmin)
 hei_actual_vec = hei_actual.cpu().detach().numpy()
 
 # input datas
-zz_tensor_test = normalized_zz_tensors[ntest].to(device).to(dtype)
+# zz_tensor_test = normalized_zz_tensors[ntest].to(device).to(dtype)
+zz_tensor_test = normalized_zz_tensors[ntest].to(device).to(dtype).unsqueeze(0)
 sc_real_tensor_test = normalized_phis_real_tensors[ntest].to(device).to(dtype)
 sc_imag_tensor_test = normalized_phis_imag_tensors[ntest].to(device).to(dtype)
 sc_input_tensor_test = ((torch.cat((sc_real_tensor_test, sc_imag_tensor_test), dim=0)).unsqueeze(0)).unsqueeze(0)
