@@ -143,70 +143,23 @@ class FNN(nn.Module):
 
         self.input_layer = nn.Linear(input_size, hidden_neurons)
         self.hidden_layers_list = nn.ModuleList()
+        self.batchnorm_layers_list = nn.ModuleList()
         for _ in range(hidden_layers - 1):
             self.hidden_layers_list.append(nn.Linear(hidden_neurons, hidden_neurons))
+            self.batchnorm_layers_list.append(nn.BatchNorm1d(hidden_neurons))
         self.output_layer = nn.Linear(hidden_neurons, output_size)
 
     def forward(self, x):
 
         x = self.activation(self.input_layer(x))
 
-        for hidden_layer in self.hidden_layers_list:
-            x = self.activation(hidden_layer(x))
+        for i, hidden_layer in enumerate(self.hidden_layers_list):
+            # x = self.activation(hidden_layer(x))
+            x = self.activation(self.batchnorm_layers_list[i](hidden_layer(x)))
 
         x = self.activation(self.output_layer(x))
 
         return x
-'''
-# Reference CNN implementation for branch2.
-# Minimises loss upto 9e-4 with 15000 epochs.
-# Alternatively, reaches loss to the order of 6e-3 in 2400 epochs.
-# However, DeepONet has 134154 learnable parameters (Almost double that of FNN).
-# Serves as good benchmark for finetuning CNN architecture.
-class CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.activation = torch.nn.Tanh()
-        self.conv1 = torch.nn.Sequential(
-            torch.nn.Conv1d(
-                in_channels = 1,
-                out_channels = 4,
-                kernel_size = 11, # 7,
-                stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(4),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.MaxPool1d(3),
-        )
-
-        self.conv2 = torch.nn.Sequential(
-            torch.nn.Conv1d(
-                in_channels = 4,
-                out_channels = 8,
-                kernel_size = 5,
-                stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(8),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.MaxPool1d(3),
-        )
-
-        self.fnn1 = torch.nn.Linear(416, 234)
-        self.fnn2 = torch.nn.Linear(234, 64)
-
-    def forward(self, x):
-        assert torch.isinf(x).any() != True
-        x = self.conv1(x)
-        assert torch.isinf(x).any() != True
-        x = self.conv2(x)
-        assert torch.isinf(x).any() != True
-        x = x.view(x.size(0), -1)
-        output = self.activation(self.fnn1(x))
-        output = self.activation(self.fnn2(output))
-        return output
-'''
 
 '''
 # Main reference CNN implementation for branch2.
@@ -214,71 +167,6 @@ class CNN(nn.Module):
 # Alternatively, reaches loss to the order of 6e-3 in ~3200 epochs
 # and loss to the order of 3.2e-3 in ~6000 epochs.
 # DeepONet has 38968 learnable parameters (60% of learnable parameters of FNN).
-class CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.activation = torch.nn.Tanh()
-        self.conv1 = torch.nn.Sequential(
-            torch.nn.Conv1d(
-                in_channels = 1,
-                out_channels = 4,
-                kernel_size = 11, # 7,
-                stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(4),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.AvgPool1d(3), # torch.nn.MaxPool1d(3),
-        )
-
-        self.conv2 = torch.nn.Sequential(
-            torch.nn.Conv1d(
-                in_channels = 4,
-                out_channels = 8,
-                kernel_size = 5,
-                stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(8),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.AvgPool1d(3), # torch.nn.MaxPool1d(3),
-        )
-
-        self.conv3 = torch.nn.Sequential(
-            torch.nn.Conv1d(
-                in_channels = 8,
-                out_channels = 8,
-                kernel_size = 5,
-                stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(8),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.AvgPool1d(3), # torch.nn.MaxPool1d(3),
-        )
-
-        self.fnn1 = torch.nn.Linear(136, 64)
-        self.fnn2 = torch.nn.Linear(64, 64)
-        self.fnn3 = torch.nn.Linear(64, 64)
-
-    def forward(self, x):
-        print(f"Input size: {x.shape}")
-        x = self.conv1(x)
-        print(f"After conv1: {x.shape}")
-        x = self.conv2(x)
-        print(f"After conv2: {x.shape}")
-        x = self.conv3(x)
-        print(f"After conv3: {x.shape}")
-        x = x.view(x.size(0), -1)
-        print(f"After reshape: {x.shape}")
-        output = self.activation(self.fnn1(x))
-        print(f"After FNN1: {output.shape}")
-        output = self.activation(self.fnn2(output))
-        print(f"After FNN2: {output.shape}")
-        output = self.activation(self.fnn3(output))
-        print(f"After FNN3: {output.shape}")
-        exit()
-        return output
 '''
 
 class CNN(nn.Module):
