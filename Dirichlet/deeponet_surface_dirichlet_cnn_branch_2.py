@@ -387,7 +387,7 @@ time_cost_minutes = (time2 - time1) / 60
 print(f"Training time cost: {time_cost_minutes:.2f} minutes")
 
 # test results using testing data
-
+model.eval()
 ntest = 19720
 
 # original surface height
