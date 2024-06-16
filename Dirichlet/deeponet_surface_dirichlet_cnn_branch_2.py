@@ -341,7 +341,7 @@ size_batch = 3000
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 # number of epochs
-num_epochs = 300 # 15000
+num_epochs = 15000
 
 time1 = time.time()
 
