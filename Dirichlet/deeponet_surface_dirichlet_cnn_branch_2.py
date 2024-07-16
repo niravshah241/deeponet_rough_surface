@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 
+torch.manual_seed(8)
 path = "data_use_dirichlet/"
 
 if os.path.exists(path) == False:
@@ -162,44 +163,52 @@ class CNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.activation = torch.nn.Tanh()
-        self.conv1 = torch.nn.Sequential(
+        self.conv1d_1 = \
             torch.nn.Conv1d(
                 in_channels = 2,
                 out_channels = 4,
                 kernel_size = 11,
                 stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(4),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.AvgPool1d(3), # torch.nn.MaxPool1d(3),
-        )
+                padding = 2)
+        self.batchnorm1d_1 = torch.nn.BatchNorm1d(4)
+        self.activation_1 = torch.nn.Tanh() # torch.nn.ReLU(),
+        self.avg_pool_1 = torch.nn.AvgPool1d(3) # torch.nn.MaxPool1d(3),
 
-        self.conv2 = torch.nn.Sequential(
+        self.conv1d_2 = \
             torch.nn.Conv1d(
                 in_channels = 4,
                 out_channels = 6,
                 kernel_size = 7,
                 stride = 1,
-                padding = 2,
-            ),
-            torch.nn.BatchNorm1d(6),
-            torch.nn.Tanh(), # torch.nn.ReLU(),
-            torch.nn.AvgPool1d(3), # torch.nn.MaxPool1d(3),
-        )
+                padding = 2)
+        self.batchnorm1d_2 = torch.nn.BatchNorm1d(6)
+        self.activation_2 = torch.nn.Tanh() # torch.nn.ReLU(),
+        self.avg_pool_2 = torch.nn.AvgPool1d(3) # torch.nn.MaxPool1d(3),
 
         self.fnn1 = torch.nn.Linear(150, 64)
         self.fnn2 = torch.nn.Linear(64, 64)
         self.fnn3 = torch.nn.Linear(64, 64)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
+        # First convolution layer
+        x = self.conv1d_1(x)
+        x = self.batchnorm1d_1(x)
+        x = self.activation_1(x)
+        x = self.avg_pool_1(x)
+
+        # Second convolution layer
+        x = self.conv1d_2(x)
+        x = self.batchnorm1d_2(x)
+        x = self.activation_2(x)
+        x = self.avg_pool_2(x)
 
         x = x.view(x.size(0), -1)
-        output = self.activation(self.fnn1(x))
-        output = self.activation(self.fnn2(output))
-        output = self.activation(self.fnn3(output))
+        output = self.fnn1(x)
+        output = self.activation(output)
+        output = self.fnn2(output)
+        output = self.activation(output)
+        output = self.fnn3(output)
+        output = self.activation(output)
         return output
 
 """main structure of DeepONet with multiple inputs (two inputs)"""
@@ -305,7 +314,7 @@ size_batch = 3000
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 # number of epochs
-num_epochs = 15000
+num_epochs = 150 # 15000
 
 time1 = time.time()
 
@@ -505,3 +514,74 @@ print('average l2 norm error for noisy test data set is ', average_l2_error_nois
 
 std_dev_l2_error_noise = np.std(l2_errors_noise_test)
 print('standard deviation of l2 norm error for noisy test data set is ', std_dev_l2_error_noise)
+
+class CNN_print_dim(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.activation = torch.nn.Tanh()
+        self.conv1d_1 = \
+            torch.nn.Conv1d(
+                in_channels = 2,
+                out_channels = 4,
+                kernel_size = 11,
+                stride = 1,
+                padding = 2)
+        self.batchnorm1d_1 = torch.nn.BatchNorm1d(4)
+        self.activation_1 = torch.nn.Tanh() # torch.nn.ReLU(),
+        self.avg_pool_1 = torch.nn.AvgPool1d(3) # torch.nn.MaxPool1d(3),
+
+        self.conv1d_2 = \
+            torch.nn.Conv1d(
+                in_channels = 4,
+                out_channels = 6,
+                kernel_size = 7,
+                stride = 1,
+                padding = 2)
+        self.batchnorm1d_2 = torch.nn.BatchNorm1d(6)
+        self.activation_2 = torch.nn.Tanh() # torch.nn.ReLU(),
+        self.avg_pool_2 = torch.nn.AvgPool1d(3) # torch.nn.MaxPool1d(3),
+
+        self.fnn1 = torch.nn.Linear(150, 64)
+        self.fnn2 = torch.nn.Linear(64, 64)
+        self.fnn3 = torch.nn.Linear(64, 64)
+
+    def forward(self, x):
+        # First convolution layer
+        print(f"Input dimension: {x.shape}")
+        x = self.conv1d_1(x)
+        print(f"After first conv1d: {x.shape}")
+        x = self.batchnorm1d_1(x)
+        print(f"After first batchnorm1d: {x.shape}")
+        x = self.activation_1(x)
+        print(f"After first activation: {x.shape}")
+        x = self.avg_pool_1(x)
+        print(f"After first avg pool: {x.shape}")
+
+        # Second convolution layer
+        x = self.conv1d_2(x)
+        print(f"After second conv1d: {x.shape}")
+        x = self.batchnorm1d_2(x)
+        print(f"After second batchnorm1d: {x.shape}")
+        x = self.activation_2(x)
+        print(f"After second activation: {x.shape}")
+        x = self.avg_pool_2(x)
+        print(f"After second avg pool: {x.shape}")
+
+        x = x.view(x.size(0), -1)
+        print(f"After reshape: {x.shape}")
+        output = self.fnn1(x)
+        print(f"After fnn1: {output.shape}")
+        output = self.activation(output)
+        print(f"After fnn1 activation: {output.shape}")
+        output = self.fnn2(output)
+        print(f"After fnn2: {output.shape}")
+        output = self.activation(output)
+        print(f"After fnn2 activation: {output.shape}")
+        output = self.fnn3(output)
+        print(f"After fnn3: {output.shape}")
+        output = self.activation(output)
+        print(f"After fnn3 activation: {output.shape}")
+        return output
+
+cnn_print_dim = CNN_print_dim().to(device)
+cnn_print_dim(sc_input_tensor)
